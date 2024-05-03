@@ -16,7 +16,8 @@
 - [ ] M3u(8) playback
 - [ ] Transcoding
 
-# Possible features:
+# Possible features
+- [ ] Other media databases (tmdb, myanimelist, etc.)
 - [ ] Customization
 - [ ] Plugins
 - [ ] Integration with other streaming services
