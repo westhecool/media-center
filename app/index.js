@@ -202,10 +202,10 @@ async function tests() {
     // tests
     await global.database.exec(`DELETE FROM collection;`);
     await global.database.exec(`INSERT INTO collection VALUES (1, 'file://E:\\hdd3\\jellyfin\\movies', 'movies', true, true, false);`);
-    scanCollection(1, true);
+    scanCollection(1, false);
     await global.database.exec(`INSERT INTO collection VALUES (2, 'file://E:\\hdd3\\jellyfin\\shows', 'shows', true, true, false);`);
-    scanCollection(2, true);
+    scanCollection(2, false);
     await global.database.exec(`INSERT INTO collection VALUES (3, 'file://H:\\test-media', 'mixed', true, true, true);`);
-    scanCollection(3, true);
+    scanCollection(3, false);
     // end tests
 }
