@@ -8,13 +8,27 @@ const logger = new Logger(path.basename(__filename));
 const defaults = {
     videojs: {
         js_path: path.dirname(require.resolve('video.js')) + '/video.js',
-        css_path: path.dirname(require.resolve('video.js')) + '/video-js.css',
+        css_path: path.dirname(require.resolve('video.js')) + '/video-js.css'
     },
     http: {
         port: 8080,
         host: '0.0.0.0'
+    },
+    ffmpeg: {
+        enabled: true,
+        path: 'ffmpeg',
+        hwaccel: 'none',
+        codec: 'h264',
+        custom_args: ''
+    },
+    ffprobe: {
+        enabled: true,
+        path: 'ffprobe'
     }
 };
+if (!fs.existsSync(path.join(process.cwd(), '/config/config.jsonc'))) {
+    fs.writeFileSync(path.join(process.cwd(), '/config/config.jsonc'), '// see config.example.jsonc for an example config\n{}', 'utf8');
+}
 var config = jsonc.parse(fs.readFileSync(path.join(process.cwd(), '/config/config.jsonc'), 'utf8'), defaults);
 function merge(defaults, overrides, path = 'config') {
     for (const key in overrides) {

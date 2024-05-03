@@ -51,11 +51,11 @@ async function scanCollection(collection_id, full_rescan = false) {
                 }
                 if (s.length == 3) { // file name (year).(language).(ext)
                     name = s[0];
-                    language = utils.convertToTwoLetterCode(s[1]).toLowerCase();
+                    language = utils.convertToTwoLetterCode(s[1]);
                 } else if (s.length == 4) { // file name (year).(stream title).(language).(ext)
                     name = s[0];
                     stream_title = s[1];
-                    language = utils.convertToTwoLetterCode(s[2]).toLowerCase();
+                    language = utils.convertToTwoLetterCode(s[2]);
                 } else { // file name (year).(ext)
                     name = s[0];
                 }
@@ -76,7 +76,7 @@ async function scanCollection(collection_id, full_rescan = false) {
                     lang = lang.toLowerCase();
                     if (name.includes(' ' + lang + ' ') || name.includes('-' + lang + '-') || name.includes('_' + lang + '_') || name.includes('.' + lang + '.')) {
                         name = name.replace(' ' + lang + ' ', ' ').replace('-' + lang + '-', '-').replace('_' + lang + '_', '_').replace('.' + lang + '.', '.');
-                        language = utils.convertToTwoLetterCode(lang).toLowerCase();
+                        language = utils.convertToTwoLetterCode(lang);
                         break;
                     }
                 }
@@ -97,6 +97,7 @@ async function scanCollection(collection_id, full_rescan = false) {
                 }
                 type = 'episode';
             }
+            if (language) language = language.toLowerCase();
             name = name.trim();
             const q = await imdb.search(name);
             if (q.length == 0 || !q[0].id.startsWith('tt')) {
@@ -111,15 +112,15 @@ async function scanCollection(collection_id, full_rescan = false) {
             else {
                 await global.database.exec(`UPDATE media SET path = ?, imdb_id = ?, stream_title = ?, type = ?, file_type = ?, stream_language = ?, size = ?, mtime = ?, collection_id = ?, episode = ?, season = ? WHERE id = '${media_info.id}'`, d);
             }
-            if (info.allow_media_probe) {
+            if (info.allow_media_probe && global.config.ffprobe.enabled) {
                 await new Promise((resolve, reject) => {
                     // TODO: make ffprobe use the http server instead of the file system
-                    cp.exec(`.\\data\\ffprobe -v error -print_format json -show_format -show_streams -show_chapters "${file.replace('file://', '').replace(/\"/g, '\\"')}"`, async (err, stdout, stderr) => {
+                    cp.exec(`${global.config.ffprobe.path} -v error -print_format json -show_format -show_streams -show_chapters "${file.replace('file://', '').replace(/\"/g, '\\"')}"`, async (err, stdout, stderr) => {
                         if (!err) {
                             const data = JSON.stringify(JSON.parse(stdout));
                             await global.database.exec(`INSERT INTO media_probes VALUES (NULL, ?, ?, ?)`, [file, data, collection_id]);
                         } else {
-                            logger.error(`Error while probing "${file}": ${stderr} - ${err.message}`);
+                            logger.error(`Error while probing "${file}": ${err.message}`);
                         }
                         resolve();
                     });
