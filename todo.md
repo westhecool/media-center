@@ -11,8 +11,8 @@
 - [ ] Recording watch time and played movies/shows
 - [ ] Watch list
 - [x] Record media stream information from files (with ffprobe)
-- [x] Support more file type formats (done - could work better)
-- [ ] Support more file naming formats
+- [ ] Support more file type formats
+- [x] Support more file naming formats (done - could work better)
 - [ ] IPTV
 - [ ] M3u(8) playback
 - [ ] Transcoding
