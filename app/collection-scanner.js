@@ -1,5 +1,6 @@
 const Logger = require('./logger.js');
 const path = require('path');
+const cp = require('child_process');
 const utills = require('./utills.js');
 const logger = new Logger(path.basename(__filename));
 const imdb = require('./imdb.js');
@@ -13,10 +14,15 @@ async function scanCollection(collection_id, full_rescan = false) {
     if (full_rescan) {
         logger.debug('Full rescan for collection', collection_id);
         await global.database.exec(`DELETE FROM media WHERE collection_id = ${collection_id}`);
+        await global.database.exec(`DELETE FROM media_probes WHERE collection_id = ${collection_id}`);
     }
     const protocol = info.path.split('://')[0];
     if (!global.fileSystemBackends.hasOwnProperty(protocol)) {
-        logger.error(`Error while scanning collection "${collection}": Protocol "${protocol}://" is not supported!`);
+        logger.error(`Error while scanning collection "${collection_id}": Protocol "${protocol}://" is not supported!`);
+        return;
+    }
+    if (!await global.fileSystemBackends[protocol].exists(info.path)) {
+        logger.error(`Error while scanning collection "${collection_id}": Path "${info.path}" does not exist!`);
         return;
     }
     for (const filename of await global.fileSystemBackends[protocol].readDir(info.path)) {
@@ -25,7 +31,6 @@ async function scanCollection(collection_id, full_rescan = false) {
             const media_info = (await global.database.fetch(`SELECT * FROM media WHERE path = '${info.path}/${filename}'`))[0];
             if (!media_info || media_info.mtime != stats.mtime || media_info.size != stats.size) {
                 logger.debug('Scanning', info.path + '/' + filename);
-                // id integer primary key autoincrement, path text, imdb_id text, stream_title text, name text, year integer, type text, file_type text, stream_language text, size integer, mtime date
                 const s = filename.split('.');
                 var language = null;
                 var file_type = null;
@@ -53,10 +58,10 @@ async function scanCollection(collection_id, full_rescan = false) {
                 } else { // file name (year).(ext)
                     name = s[0];
                 }
-                const match = name.match(/\d{4}/);
-                const year = match ? match[0] : null;
                 const q = await imdb.search(name);
                 const imdb_id = q[0] ? q[0].id : null;
+                const match = name.match(/\d{4}/);
+                const year = q[0] ? q[0].year : (match ? match[0] : null); // use year from imdb if possible else use year from filename if possible
                 logger.debug('Identified', info.path + '/' + filename, 'as', q[0] ? q[0].id : null, q[0] ? q[0].title : null, `(${q[0] ? q[0].year : null})`);
                 await imdb.get(imdb_id); // add imdb info to the database for good measure
                 const d = [info.path + '/' + filename, imdb_id, stream_title, name, year, type, file_type, language, stats.size, stats.mtime, collection_id];
@@ -64,16 +69,39 @@ async function scanCollection(collection_id, full_rescan = false) {
                 else {
                     await global.database.exec(`UPDATE media SET path = ?, imdb_id = ?, stream_title = ?, name = ?, year = ?, type = ?, file_type = ?, stream_language = ?, size = ?, mtime = ?, collection_id = ? WHERE id = '${media_info.id}'`, d);
                 }
+                if (info.allow_media_probe) {
+                    await new Promise((resolve, reject) => {
+                        // TODO: make ffprobe use the http server instead of the file system
+                        cp.exec(`.\\data\\ffprobe -v error -print_format json -show_format -show_streams -show_chapters "${info.path.replace('file://', '').replace(/\"/g, '\\"')}/${filename.replace(/\"/g, '\\"')}"`, async (err, stdout, stderr) => {
+                            if (!err) {
+                                const data = JSON.stringify(JSON.parse(stdout));
+                                await global.database.exec(`INSERT INTO media_probes VALUES (NULL, ?, ?, ?)`, [info.path + '/' + filename, data, collection_id]);
+                            } else {
+                                logger.error(`Error while probing "${info.name}/${filename}": ${stderr} - ${err.message}`);
+                            }
+                            resolve();
+                        });
+                    });
+                }
             }
         }
     }
-    for (const media of await global.database.fetch(`SELECT * FROM media WHERE collection_id = '${collection_id}'`)) {
+    for (const media of await global.database.fetch(`SELECT * FROM media WHERE collection_id = ${collection_id}`)) {
         if (!await global.fileSystemBackends[protocol].exists(media.path)) {
             await global.database.exec(`DELETE FROM media WHERE id = ${media.id}`);
             logger.debug('Deleting', media.path, 'from database (not found on disk anymore)');
         }
     }
+    for (const media_probe of await global.database.fetch(`SELECT * FROM media_probes WHERE collection_id = ${collection_id}`)) {
+        if (!await global.fileSystemBackends[protocol].exists(media_probe.path)) {
+            await global.database.exec(`DELETE FROM media_probes WHERE id = ${media_probe.id}`);
+            logger.debug('Deleting', media_probe.path, 'from probe database (not found on disk anymore)');
+        }
+    }
+    logger.debug('Finished scanning collection', collection_id);
 }
-global.database.exec(`INSERT OR IGNORE INTO collection VALUES (NULL, 'file://C:\\Users\\WEuge\\Documents\\GitHub\\media-center\\test-media', 'test', true, true)`).then(() => {
-    scanCollection(1, true);
-});
+global.database.exec(`DELETE FROM collection`).then(() => {
+    global.database.exec(`INSERT INTO collection VALUES (1, 'file://H:\\test-media', 'test', true, true)`).then(() => {
+        scanCollection(1, true);
+    });
+})
