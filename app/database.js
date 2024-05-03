@@ -1,7 +1,6 @@
 const sqlite3 = require('sqlite3');
-const Logger = require('./logger.js');
 const path = require('path');
-const logger = new Logger(path.basename(__filename));
+const logger = new global.Logger('database');
 logger.debug('Opening database...');
 const database = new sqlite3.Database(process.cwd() + '/data/database.db');
 async function fetch(sql, params = []) {

@@ -1,8 +1,8 @@
-const Logger = require('./logger.js');
+
 const path = require('path');
 const cp = require('child_process');
 const utils = require('./utils.js');
-const logger = new Logger(path.basename(__filename));
+const logger = new global.Logger('collection scanner');
 const imdb = require('./imdb.js');
 async function scanCollection(collection_id, full_rescan = false) {
     const info = (await global.database.fetch(`SELECT * FROM collection WHERE id = ?;`, [collection_id]))[0];

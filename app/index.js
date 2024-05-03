@@ -2,12 +2,12 @@
 global.args = yargs
 .option('log-level', { type: 'number', default: 1, description: 'Log level. 0 = debug, 1 = info, 2 = warn, 3 = error, 4 = silent' })
 .parse();*/
-const Logger = require('./logger.js');
+global.Logger = require('./logger.js');
 const path = require('path');
 global.config = {
     log_level: 4
 };
-const logger = new Logger(path.basename(__filename));
+const logger = new global.Logger('main');
 //logger.debug('Loading config...');
 global.config = require('./config.js');
 logger.info('Starting up...');
@@ -160,7 +160,6 @@ const server = http.createServer(async (req, res) => {
                 res.end();
                 return;
             }
-
             const chunksize = (end - start) + 1;
             res.writeHead(206, { // Partial Content
                 'Content-Range': `bytes ${start}-${end}/${media.size}`,
@@ -172,9 +171,15 @@ const server = http.createServer(async (req, res) => {
             file.on('data', (chunk) => {
                 if (!res.write(chunk)) file.pause();
             });
-            file.on('end', () => res.end());
-            res.on('drain', () => file.resume());
-            res.on('close', () => file.destroy());
+            file.on('end', () => {
+                res.end()
+            });
+            res.on('drain', () => {
+                file.resume()
+            });
+            res.on('close', () => {
+                file.destroy()
+            });
         } else {
             res.writeHead(200, {
                 'Accept-Ranges': 'bytes',
@@ -185,9 +190,15 @@ const server = http.createServer(async (req, res) => {
             file.on('data', (chunk) => {
                 if (!res.write(chunk)) file.pause();
             });
-            file.on('end', () => res.end());
-            res.on('drain', () => file.resume());
-            res.on('close', () => file.destroy());
+            file.on('end', () => {
+                res.end()
+            });
+            res.on('drain', () => {
+                file.resume()
+            });
+            res.on('close', () => {
+                file.destroy()
+            });
         }
     } else {
         res.writeHead(404);
@@ -202,10 +213,12 @@ async function tests() {
     // tests
     await global.database.exec(`DELETE FROM collection;`);
     await global.database.exec(`INSERT INTO collection VALUES (1, 'file://E:\\hdd3\\jellyfin\\movies', 'movies', true, true, false);`);
-    scanCollection(1, false);
+    //scanCollection(1, false);
     await global.database.exec(`INSERT INTO collection VALUES (2, 'file://E:\\hdd3\\jellyfin\\shows', 'shows', true, true, false);`);
-    scanCollection(2, false);
+    //scanCollection(2, false);
     await global.database.exec(`INSERT INTO collection VALUES (3, 'file://H:\\test-media', 'mixed', true, true, true);`);
-    scanCollection(3, false);
+    //scanCollection(3, false);
+    await global.database.exec(`INSERT INTO collection VALUES (4, 'discord:///', 'discord', true, true, true);`);
+    //scanCollection(4, true);
     // end tests
 }

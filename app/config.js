@@ -3,8 +3,7 @@ const jsonc = require('jsonc');
 const utils = require('./utils.js');
 const fs = require('fs');
 const path = require('path');
-const Logger = require('./logger.js');
-const logger = new Logger(path.basename(__filename));
+const logger = new global.Logger('config loader');
 const defaults = {
     videojs: {
         js_path: path.dirname(require.resolve('video.js')) + '/video.js',
@@ -38,6 +37,9 @@ function merge(defaults, overrides, path = 'config') {
                 logger.warn(`Configuration option for '${`${path}.${key}`}' is of type '${utils.typeOf(overrides[key])}' which is different from the expected type '${utils.typeOf(defaults[key])}'.`);
             }
             if (utils.typeOf(overrides[key]) === 'object') {
+                if (utils.typeOf(defaults[key]) !== 'object') {
+                    defaults[key] = {};
+                }
                 defaults[key] = merge(defaults[key], overrides[key], `${path}.${key}`);
             } else {
                 defaults[key] = overrides[key];
