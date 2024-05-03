@@ -122,7 +122,7 @@ async function scanCollection(collection_id, full_rescan = false) {
             media_info = (await global.database.fetch(`SELECT * FROM media WHERE path = ?;`, [file]))[0];
             if (info.allow_media_probe && global.config.ffprobe.enabled) {
                 await new Promise((resolve, reject) => {
-                    cp.exec(`${global.config.ffprobe.path} -v error -print_format json -show_format -show_streams -show_chapters "http://${global.config.http.host == '0.0.0.0' ? '127.0.0.1' : global.config.http.host}:${global.config.http.port}/stream/${media_info.id}"`, async (err, stdout, stderr) => {
+                    cp.exec(`${global.config.ffprobe.path} -v error -print_format json -show_format -show_streams -show_chapters "http://${global.config.http.host == '0.0.0.0' ? 'localhost' : global.config.http.host}:${global.config.http.port}/stream/${media_info.id}"`, async (err, stdout, stderr) => {
                         if (!err) {
                             const data = JSON.stringify(JSON.parse(stdout));
                             await global.database.exec(`INSERT INTO media_probes VALUES (NULL, ?, ?, ?);`, [file, data, collection_id]);
