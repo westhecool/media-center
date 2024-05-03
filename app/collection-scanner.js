@@ -18,11 +18,11 @@ async function scanCollection(collection_id, full_rescan = false) {
     }
     const protocol = info.path.split('://')[0];
     if (!global.fileSystemBackends.hasOwnProperty(protocol)) {
-        logger.error(`Error while scanning collection ${collection_id}: Protocol "${protocol}://" is not supported!`);
+        logger.error(`Error while scanning collection ${collection_id}: Protocol '${protocol}://' is not supported!`);
         return;
     }
     if (!await global.fileSystemBackends[protocol].exists(info.path)) {
-        logger.error(`Error while scanning collection ${collection_id}: Path "${info.path}" does not exist!`);
+        logger.error(`Error while scanning collection ${collection_id}: Path '${info.path}' does not exist!`);
         return;
     }
     const scan = async (file, stats, is_show = false) => {
@@ -47,7 +47,7 @@ async function scanCollection(collection_id, full_rescan = false) {
                 } else if (ext == '.mp3' || ext == '.m4a') {
                     file_type = 'audio';
                 } else {
-                    logger.warn(`Error while scanning collection ${collection_id}: Unsupported file extension "${ext}" for file "${file}".`);
+                    logger.warn(`Error while scanning collection ${collection_id}: Unsupported file extension '${ext}' for file '${file}'.`);
                     return;
                 }
                 if (s.length == 3) { // file name (year).(language).(ext)
@@ -69,7 +69,7 @@ async function scanCollection(collection_id, full_rescan = false) {
                 } else if (ext == '.mp3' || ext == '.m4a') {
                     file_type = 'audio';
                 } else {
-                    logger.warn(`Error while scanning collection ${collection_id}: Unsupported file extension "${ext}" for file "${file}".`);
+                    logger.warn(`Error while scanning collection ${collection_id}: Unsupported file extension '${ext}' for file '${file}'.`);
                     return;
                 }
                 name = path.basename(file).toLowerCase();
@@ -107,27 +107,27 @@ async function scanCollection(collection_id, full_rescan = false) {
             name = name.trim();
             const q = await imdb.search(name);
             if (q.length == 0 || !q[0].id.startsWith('tt')) {
-                logger.warn(`Error while scanning collection ${collection_id}: No results found for file "${file}"!`);
+                logger.warn(`Error while scanning collection ${collection_id}: No results found for file '${file}'!`);
                 return;
             }
             const imdb_id = q[0].id;
             logger.debug('Identified', file, 'as', q[0].id, q[0].title, `(${q[0].year})`);
             await imdb.get(imdb_id); // add imdb info to the database for good measure
-            const d = [file, imdb_id, stream_title, type, file_type, language, resolution, stats.size, stats.mtime, collection_id, episode, season];
-            if (!media_info) await global.database.exec(`INSERT INTO media VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`, d);
+            const d = [file, imdb_id, stream_title, type, file_type, language, resolution, stats.size, stats.mtime, parseInt(media_info ? media_info.added_on : (Date.now() / 1000)), collection_id, episode, season];
+            if (!media_info) await global.database.exec(`INSERT INTO media VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`, d);
             else {
                 d.push(media_info.id);
-                await global.database.exec(`UPDATE media SET path = ?, imdb_id = ?, stream_title = ?, type = ?, file_type = ?, stream_language = ?, stream_resolution = ?, size = ?, mtime = ?, collection_id = ?, episode = ?, season = ? WHERE id = ?;`, d);
+                await global.database.exec(`UPDATE media SET path = ?, imdb_id = ?, stream_title = ?, type = ?, file_type = ?, stream_language = ?, stream_resolution = ?, size = ?, mtime = ?, added_on = ?, collection_id = ?, episode = ?, season = ? WHERE id = ?;`, d);
             }
             if (info.allow_media_probe && global.config.ffprobe.enabled) {
                 await new Promise((resolve, reject) => {
                     // TODO: make ffprobe use the http server instead of the file system
-                    cp.exec(`${global.config.ffprobe.path} -v error -print_format json -show_format -show_streams -show_chapters "${file.replace('file://', '').replace(/\"/g, '\\"')}"`, async (err, stdout, stderr) => {
+                    cp.exec(`${global.config.ffprobe.path} -v error -print_format json -show_format -show_streams -show_chapters "${file.replace('file://', '').replace(/\'/g, '\\"')}"`, async (err, stdout, stderr) => {
                         if (!err) {
                             const data = JSON.stringify(JSON.parse(stdout));
                             await global.database.exec(`INSERT INTO media_probes VALUES (NULL, ?, ?, ?);`, [file, data, collection_id]);
                         } else {
-                            logger.error(`Error while probing "${file}": ${err.message}`);
+                            logger.error(`Error while probing '${file}': ${err.message}`);
                         }
                         resolve();
                     });

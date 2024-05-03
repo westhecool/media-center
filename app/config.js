@@ -35,7 +35,7 @@ function merge(defaults, overrides, path = 'config') {
     for (const key in overrides) {
         if (overrides.hasOwnProperty(key)) {
             if (utils.typeOf(overrides[key]) !== utils.typeOf(defaults[key])) {
-                logger.warn(`Configuration option for "${`${path}.${key}`}" is of type "${utils.typeOf(overrides[key])}" which is different from the expected type "${utils.typeOf(defaults[key])}".`);
+                logger.warn(`Configuration option for '${`${path}.${key}`}' is of type '${utils.typeOf(overrides[key])}' which is different from the expected type '${utils.typeOf(defaults[key])}'.`);
             }
             if (utils.typeOf(overrides[key]) === 'object') {
                 defaults[key] = merge(defaults[key], overrides[key], `${path}.${key}`);

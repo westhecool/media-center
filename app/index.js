@@ -34,6 +34,9 @@ global.database.exec(`DELETE FROM collection;`).then(() => {
     global.database.exec(`INSERT INTO collection VALUES (2, 'file://E:\\hdd3\\jellyfin\\shows', 'shows', true, true, false);`).then(() => {
         scanCollection(2, false);
     });
+    global.database.exec(`INSERT INTO collection VALUES (3, 'file://H:\\test-media', 'mixed', true, true, true);`).then(() => {
+        scanCollection(3, false);
+    });
 });
 // end tests
 if (config.ffmpeg.enabled) {
@@ -63,7 +66,71 @@ const server = http.createServer(async (req, res) => {
     });
     if (url == '/') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(await database.fetch('SELECT * FROM media;'), null, 2));
+        res.end('{}');
+    } else if (url == '/api/all-collections-media') {
+        const limit = Number(GET['limit'] || 0);
+        const offset = Number(GET['offset'] || 0);
+        var data = [];
+        for (const collection of (await global.database.fetch(`SELECT * FROM collection;`))) {
+            const args = limit ? [collection.id, limit, offset] : [collection.id];
+            data.push({
+                id: collection.id,
+                name: collection.name,
+                media: await database.fetch(`SELECT * FROM media WHERE collection_id = ? AND ((type = 'movie') OR (type = 'episode' AND episode = 1 AND season = 1)) ORDER BY added_on DESC ${limit ? `LIMIT ? OFFSET ?` : ''};`, args)
+            });
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+    } else if (url == '/api/collection-media') {
+        const limit = Number(GET['limit'] || 0);
+        const offset = Number(GET['offset'] || 0);
+        const collection_id = Number(GET['collection']);
+        if (!collection_id) {
+            res.writeHead(400);
+            res.end();
+            return;
+        }
+        const collection = (await global.database.fetch(`SELECT * FROM collection WHERE id = ?;`, [collection_id]))[0];
+        if (!collection) {
+            res.writeHead(404);
+            res.end();
+            return;
+        }
+        const args = limit ? [collection_id, limit, offset] : [collection_id];
+        var data = {
+            id: collection.id,
+            name: collection.name,
+            media: await database.fetch(`SELECT * FROM media WHERE collection_id = ? AND ((type = 'movie') OR (type = 'episode' AND episode = 1 AND season = 1)) ORDER BY added_on DESC ${limit ? `LIMIT ? OFFSET ?` : ''};`, args)
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+    } else if (url == '/api/collections') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(await global.database.fetch(`SELECT * FROM collection;`)));
+    } else if (url == '/api/media') {
+        const id = Number(GET['id'] || 0);
+        if (!id) {
+            res.writeHead(400);
+            res.end();
+            return;
+        }
+        const media = (await global.database.fetch(`SELECT * FROM media WHERE id = ?;`, [id]))[0];
+        if (!media) {
+            res.writeHead(404);
+            res.end();
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(media));
+    } else if (url == '/api/medias-by-imdb-id') {
+        const id = GET['id'];
+        if (!id) {
+            res.writeHead(400);
+            res.end();
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(await global.database.fetch(`SELECT * FROM media WHERE imdb_id = ?;`, [id])));
     } else if (url.startsWith('/stream/')) {
         const id = decodeURI(url.split('/')[2].split('.')[0]);
         if (!id) {
@@ -92,7 +159,7 @@ const server = http.createServer(async (req, res) => {
             return;
         }
         if (req.headers.range) {
-            const parts = req.headers.range.replace(/bytes=/, "").split("-");
+            const parts = req.headers.range.replace(/bytes=/, '').split('-');
             const start = parseInt(parts[0], 10);
             const end = parts[1] ? parseInt(parts[1], 10) : media.size - 1;
             if (start >= media.size) {
@@ -134,6 +201,9 @@ const server = http.createServer(async (req, res) => {
             res.on('drain', () => file.resume());
             res.on('close', () => file.destroy());
         }
+    } else {
+        res.writeHead(404);
+        res.end();
     }
 });
 server.listen(config.http.port, config.http.host, () => {

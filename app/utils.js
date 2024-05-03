@@ -21,19 +21,19 @@ function convertToTwoLetterCode(input) {
     }
 
     // Check if it is a valid two-letter code
-    if (input.length === 2 && langs.where("1", input)) {
+    if (input.length === 2 && langs.where('1', input)) {
         return input;
     }
 
     // Convert from three-letter code to two-letter code
     else if (input.length === 3) {
-        language = langs.where("3", input);
+        language = langs.where('3', input);
         return language ? language['1'] : null;
     }
 
     // Convert from full name to two-letter code
     else {
-        language = langs.where("name", input);
+        language = langs.where('name', input);
         return language ? language['1'] : null;
     }
 }
