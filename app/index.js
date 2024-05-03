@@ -26,19 +26,7 @@ for (const backend of fs.readdirSync(__dirname + '/file-system-backends')) {
 logger.debug('Loading database...');
 global.database = require('./database.js');
 const scanCollection = require('./collection-scanner.js');
-// tests
-global.database.exec(`DELETE FROM collection;`).then(() => {
-    global.database.exec(`INSERT INTO collection VALUES (1, 'file://E:\\hdd3\\jellyfin\\movies', 'movies', true, true, false);`).then(() => {
-        scanCollection(1, false);
-    });
-    global.database.exec(`INSERT INTO collection VALUES (2, 'file://E:\\hdd3\\jellyfin\\shows', 'shows', true, true, false);`).then(() => {
-        scanCollection(2, false);
-    });
-    global.database.exec(`INSERT INTO collection VALUES (3, 'file://H:\\test-media', 'mixed', true, true, true);`).then(() => {
-        scanCollection(3, false);
-    });
-});
-// end tests
+const cp = require('child_process');
 if (config.ffmpeg.enabled) {
     try {
         cp.execSync(config.ffmpeg.path + ' -version');
@@ -208,4 +196,16 @@ const server = http.createServer(async (req, res) => {
 });
 server.listen(config.http.port, config.http.host, () => {
     logger.info(`Listening on http://${config.http.host}:${config.http.port}`);
+    tests();
 });
+async function tests() {
+    // tests
+    await global.database.exec(`DELETE FROM collection;`);
+    await global.database.exec(`INSERT INTO collection VALUES (1, 'file://E:\\hdd3\\jellyfin\\movies', 'movies', true, true, false);`);
+    scanCollection(1, true);
+    await global.database.exec(`INSERT INTO collection VALUES (2, 'file://E:\\hdd3\\jellyfin\\shows', 'shows', true, true, false);`);
+    scanCollection(2, true);
+    await global.database.exec(`INSERT INTO collection VALUES (3, 'file://H:\\test-media', 'mixed', true, true, true);`);
+    scanCollection(3, true);
+    // end tests
+}

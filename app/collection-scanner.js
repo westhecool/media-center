@@ -26,7 +26,7 @@ async function scanCollection(collection_id, full_rescan = false) {
         return;
     }
     const scan = async (file, stats, is_show = false) => {
-        const media_info = (await global.database.fetch(`SELECT * FROM media WHERE path = ?;`, [file]))[0];
+        var media_info = (await global.database.fetch(`SELECT * FROM media WHERE path = ?;`, [file]))[0];
         if (!media_info || media_info.mtime != stats.mtime || media_info.size != stats.size) {
             logger.debug('Scanning', file);
             var language = null;
@@ -119,10 +119,10 @@ async function scanCollection(collection_id, full_rescan = false) {
                 d.push(media_info.id);
                 await global.database.exec(`UPDATE media SET path = ?, imdb_id = ?, stream_title = ?, type = ?, file_type = ?, stream_language = ?, stream_resolution = ?, size = ?, mtime = ?, added_on = ?, collection_id = ?, episode = ?, season = ? WHERE id = ?;`, d);
             }
+            media_info = (await global.database.fetch(`SELECT * FROM media WHERE path = ?;`, [file]))[0];
             if (info.allow_media_probe && global.config.ffprobe.enabled) {
                 await new Promise((resolve, reject) => {
-                    // TODO: make ffprobe use the http server instead of the file system
-                    cp.exec(`${global.config.ffprobe.path} -v error -print_format json -show_format -show_streams -show_chapters "${file.replace('file://', '').replace(/\'/g, '\\"')}"`, async (err, stdout, stderr) => {
+                    cp.exec(`${global.config.ffprobe.path} -v error -print_format json -show_format -show_streams -show_chapters "http://${global.config.http.host == '0.0.0.0' ? '127.0.0.1' : global.config.http.host}:${global.config.http.port}/stream/${media_info.id}"`, async (err, stdout, stderr) => {
                         if (!err) {
                             const data = JSON.stringify(JSON.parse(stdout));
                             await global.database.exec(`INSERT INTO media_probes VALUES (NULL, ?, ?, ?);`, [file, data, collection_id]);
