@@ -9,6 +9,7 @@ function typeOf(value) {
     }
     return type;
 }
+
 const langs = require('langs');
 function convertToTwoLetterCode(input) {
     let language;
@@ -36,7 +37,19 @@ function convertToTwoLetterCode(input) {
         return language ? language['1'] : null;
     }
 }
+
+function allLanguagesList() {
+    var list = [];
+    for (const lang of langs.all()) {
+        for (const key in lang) {
+            list.push(lang[key]);
+        }
+    }
+    return list;
+}
+
 module.exports = {
     typeOf,
-    convertToTwoLetterCode
+    convertToTwoLetterCode,
+    allLanguagesList
 }

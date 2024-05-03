@@ -6,7 +6,7 @@ module.exports = {
         const stat = await fs.promises.stat(path.replace('file://', ''));
         return {
             size: stat.size,
-            mtime: new Date(stat.mtime).getTime() / 1000,
+            mtime: parseInt(new Date(stat.mtime).getTime() / 1000),
             isDirectory: stat.isDirectory()
         };
     },
