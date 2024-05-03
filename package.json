@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "imdb-client": "github:westhecool/node-imdb",
     "jsonc": "^2.0.0",
     "langs": "^2.0.0",
     "mime-types": "^2.1.35",

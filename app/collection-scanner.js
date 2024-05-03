@@ -2,11 +2,17 @@ const Logger = require('./logger.js');
 const path = require('path');
 const utills = require('./utills.js');
 const logger = new Logger(path.basename(__filename));
-async function scanCollection(collection) {
-    const info = (await global.databese.fetch(`SELECT * FROM collection WHERE name = '${collection}'`))[0];
+const imdb = require('./imdb.js');
+async function scanCollection(collection_id, full_rescan = false) {
+    const info = (await global.database.fetch(`SELECT * FROM collection WHERE id = '${collection_id}'`))[0];
     if (!info) {
-        logger.warn(`Error while scanning collection "${collection}": Collection not found.`);
+        logger.warn(`Error while scanning collection "${collection_id}": Collection not found.`);
         return;
+    }
+    logger.debug('Scanning collection', collection_id, info.name);
+    if (full_rescan) {
+        logger.debug('Full rescan for collection', collection_id);
+        await global.database.exec(`DELETE FROM media WHERE collection_id = ${collection_id}`);
     }
     const protocol = info.path.split('://')[0];
     if (!global.fileSystemBackends.hasOwnProperty(protocol)) {
@@ -16,11 +22,10 @@ async function scanCollection(collection) {
     for (const filename of await global.fileSystemBackends[protocol].readDir(info.path)) {
         const stats = await global.fileSystemBackends[protocol].stat(info.path + '/' + filename);
         if (!stats.isDirectory) {
-            const media_info = (await global.databese.fetch(`SELECT * FROM media WHERE path = '${info.path}/${filename}'`))[0];
+            const media_info = (await global.database.fetch(`SELECT * FROM media WHERE path = '${info.path}/${filename}'`))[0];
             if (!media_info || media_info.mtime != stats.mtime || media_info.size != stats.size) {
                 logger.debug('Scanning', info.path + '/' + filename);
                 // id integer primary key autoincrement, path text, imdb_id text, stream_title text, name text, year integer, type text, file_type text, stream_language text, size integer, mtime date
-                const year = filename.match(/\(\d{4}\)/);
                 const s = filename.split('.');
                 var language = null;
                 var file_type = null;
@@ -35,7 +40,7 @@ async function scanCollection(collection) {
                 } else if (ext == 'mp3' || ext == 'm4a') {
                     file_type = 'audio';
                 } else {
-                    logger.warn(`Error while scanning collection "${collection}": Unsupported file extension "${ext}" for file "${info.path}/${filename}".`);
+                    logger.warn(`Error while scanning collection "${info.name}": Unsupported file extension "${ext}" for file "${info.path}/${filename}".`);
                     continue;
                 }
                 if (s.length == 3) { // file name (year).(language).(ext)
@@ -48,21 +53,27 @@ async function scanCollection(collection) {
                 } else { // file name (year).(ext)
                     name = s[0];
                 }
-                const d = [info.path + '/' + filename, null, stream_title, name, year, type, file_type, language, stats.size, stats.mtime];
-                if (!media_info) await global.databese.exec(`INSERT INTO media VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, d);
+                const match = name.match(/\d{4}/);
+                const year = match ? match[0] : null;
+                const q = await imdb.search(name);
+                const imdb_id = q[0] ? q[0].id : null;
+                logger.debug('Identified', info.path + '/' + filename, 'as', q[0] ? q[0].id : null, q[0] ? q[0].title : null, `(${q[0] ? q[0].year : null})`);
+                await imdb.get(imdb_id); // add imdb info to the database for good measure
+                const d = [info.path + '/' + filename, imdb_id, stream_title, name, year, type, file_type, language, stats.size, stats.mtime, collection_id];
+                if (!media_info) await global.database.exec(`INSERT INTO media VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, d);
                 else {
-                    await global.databese.exec(`UPDATE media SET path = ?, imdb_id = ?, stream_title = ?, name = ?, year = ?, type = ?, file_type = ?, stream_language = ?, size = ?, mtime = ? WHERE id = '${media_info.id}'`, d);
+                    await global.database.exec(`UPDATE media SET path = ?, imdb_id = ?, stream_title = ?, name = ?, year = ?, type = ?, file_type = ?, stream_language = ?, size = ?, mtime = ?, collection_id = ? WHERE id = '${media_info.id}'`, d);
                 }
             }
         }
     }
-    for (const media of await global.databese.fetch(`SELECT * FROM media WHERE path LIKE '${info.path}/%'`)) {
+    for (const media of await global.database.fetch(`SELECT * FROM media WHERE collection_id = '${collection_id}'`)) {
         if (!await global.fileSystemBackends[protocol].exists(media.path)) {
-            await global.databese.exec(`DELETE FROM media WHERE id = '${media.id}'`);
+            await global.database.exec(`DELETE FROM media WHERE id = ${media.id}`);
             logger.debug('Deleting', media.path, 'from database (not found on disk anymore)');
         }
     }
 }
-global.databese.exec(`INSERT OR IGNORE INTO collection VALUES (NULL, 'file://C:\\Users\\WEuge\\Documents\\GitHub\\media-center\\test-media', 'test')`).then(() => {
-    scanCollection('test');
+global.database.exec(`INSERT OR IGNORE INTO collection VALUES (NULL, 'file://C:\\Users\\WEuge\\Documents\\GitHub\\media-center\\test-media', 'test', true, true)`).then(() => {
+    scanCollection(1, true);
 });

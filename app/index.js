@@ -21,13 +21,13 @@ for (const backend of fs.readdirSync(__dirname + '/file-system-backends')) {
     }
 }
 logger.debug('Loading database...');
-global.databese = require('./database.js');
+global.database = require('./database.js');
 require('./collection-scanner.js');
 logger.debug('Starting server...');
 const server = http.createServer(async (req, res) => {
     logger.debug('Request', req.url);
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(JSON.stringify(await databese.fetch('SELECT * FROM media LIMIT 10;')));
+    res.end(JSON.stringify(await database.fetch('SELECT * FROM media LIMIT 10;')));
 });
 server.listen(config.http.port, config.http.host, () => {
     logger.info(`Listening on http://${config.http.host}:${config.http.port}`);
