@@ -1,7 +1,7 @@
 const imdb = require('imdb-client');
 
 async function get(id) {
-    var res = (await global.database.fetch(`SELECT * FROM imdb WHERE imdb_id = '${id}'`))[0];
+    var res = (await global.database.fetch(`SELECT * FROM imdb WHERE imdb_id = ?;`, [id]))[0];
     if (!res) {
         const data = await imdb.getAllParsed(id);
         var keywords = '';
@@ -19,7 +19,7 @@ async function get(id) {
         cast = cast.substring(0, cast.length - 1);
         genres = genres.substring(0, genres.length - 1);
         keywords = keywords.substring(0, keywords.length - 1);
-        await global.database.exec(`INSERT INTO imdb (imdb_id, title, original_title, certificate_rating, year, type, rating, keywords, genres, cast, json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+        await global.database.exec(`INSERT INTO imdb (imdb_id, title, original_title, certificate_rating, year, type, rating, keywords, genres, cast, json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`, [
             id,
             data.meta.title,
             data.meta.originalTitle,
@@ -32,7 +32,7 @@ async function get(id) {
             cast,
             JSON.stringify(data)
         ]);
-        res = (await global.database.fetch(`SELECT * FROM imdb WHERE imdb_id = '${id}'`))[0];
+        res = (await global.database.fetch(`SELECT * FROM imdb WHERE imdb_id = ?;`, [id]))[0];
     }
     return res;
 }

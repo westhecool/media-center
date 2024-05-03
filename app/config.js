@@ -24,12 +24,13 @@ const defaults = {
     ffprobe: {
         enabled: true,
         path: 'ffprobe'
-    }
+    },
+    log_level: 1
 };
-if (!fs.existsSync(path.join(process.cwd(), '/config/config.jsonc'))) {
-    fs.writeFileSync(path.join(process.cwd(), '/config/config.jsonc'), '// see config.example.jsonc for an example config\n{}', 'utf8');
+if (!fs.existsSync(process.cwd() + '/config/config.jsonc')) {
+    fs.writeFileSync(process.cwd() + '/config/config.jsonc', '// see config.example.jsonc for an example config\n{}', 'utf8');
 }
-var config = jsonc.parse(fs.readFileSync(path.join(process.cwd(), '/config/config.jsonc'), 'utf8'), defaults);
+var config = jsonc.parse(fs.readFileSync(process.cwd() + '/config/config.jsonc', 'utf8'), defaults);
 function merge(defaults, overrides, path = 'config') {
     for (const key in overrides) {
         if (overrides.hasOwnProperty(key)) {

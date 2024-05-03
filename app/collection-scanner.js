@@ -5,7 +5,7 @@ const utils = require('./utils.js');
 const logger = new Logger(path.basename(__filename));
 const imdb = require('./imdb.js');
 async function scanCollection(collection_id, full_rescan = false) {
-    const info = (await global.database.fetch(`SELECT * FROM collection WHERE id = '${collection_id}'`))[0];
+    const info = (await global.database.fetch(`SELECT * FROM collection WHERE id = ?;`, [collection_id]))[0];
     if (!info) {
         logger.warn(`Error while scanning collection ${collection_id}: Collection not found.`);
         return;
@@ -13,8 +13,8 @@ async function scanCollection(collection_id, full_rescan = false) {
     logger.debug('Scanning collection', collection_id, info.name);
     if (full_rescan) {
         logger.debug('Full rescan for collection', collection_id);
-        await global.database.exec(`DELETE FROM media WHERE collection_id = ${collection_id}`);
-        await global.database.exec(`DELETE FROM media_probes WHERE collection_id = ${collection_id}`);
+        await global.database.exec(`DELETE FROM media WHERE collection_id = ?;`, [collection_id]);
+        await global.database.exec(`DELETE FROM media_probes WHERE collection_id = ?;`, [collection_id]);
     }
     const protocol = info.path.split('://')[0];
     if (!global.fileSystemBackends.hasOwnProperty(protocol)) {
@@ -26,7 +26,7 @@ async function scanCollection(collection_id, full_rescan = false) {
         return;
     }
     const scan = async (file, stats, is_show = false) => {
-        const media_info = (await global.database.fetch(`SELECT * FROM media WHERE path = '${file}'`))[0];
+        const media_info = (await global.database.fetch(`SELECT * FROM media WHERE path = ?;`, [file]))[0];
         if (!media_info || media_info.mtime != stats.mtime || media_info.size != stats.size) {
             logger.debug('Scanning', file);
             var language = null;
@@ -36,6 +36,7 @@ async function scanCollection(collection_id, full_rescan = false) {
             var name = null;
             var season = null;
             var episode = null;
+            var resolution = null;
             if (info.use_custom_naming_format) {
                 const s = path.basename(file).split('.');
                 const ext = path.extname(file).toLowerCase();
@@ -82,6 +83,11 @@ async function scanCollection(collection_id, full_rescan = false) {
                 }
                 name = name.replace(ext, '');
             }
+            const match = name.match(/\d{3,4}p/i); // match resolution
+            if (match) {
+                name = name.replace(match[0], '');
+                resolution = match[0];
+            }
             if (is_show) {
                 const match = name.match(/E\d/i);
                 if (match) {
@@ -107,10 +113,11 @@ async function scanCollection(collection_id, full_rescan = false) {
             const imdb_id = q[0].id;
             logger.debug('Identified', file, 'as', q[0].id, q[0].title, `(${q[0].year})`);
             await imdb.get(imdb_id); // add imdb info to the database for good measure
-            const d = [file, imdb_id, stream_title, type, file_type, language, stats.size, stats.mtime, collection_id, episode, season];
-            if (!media_info) await global.database.exec(`INSERT INTO media VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, d);
+            const d = [file, imdb_id, stream_title, type, file_type, language, resolution, stats.size, stats.mtime, collection_id, episode, season];
+            if (!media_info) await global.database.exec(`INSERT INTO media VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`, d);
             else {
-                await global.database.exec(`UPDATE media SET path = ?, imdb_id = ?, stream_title = ?, type = ?, file_type = ?, stream_language = ?, size = ?, mtime = ?, collection_id = ?, episode = ?, season = ? WHERE id = '${media_info.id}'`, d);
+                d.push(media_info.id);
+                await global.database.exec(`UPDATE media SET path = ?, imdb_id = ?, stream_title = ?, type = ?, file_type = ?, stream_language = ?, stream_resolution = ?, size = ?, mtime = ?, collection_id = ?, episode = ?, season = ? WHERE id = ?;`, d);
             }
             if (info.allow_media_probe && global.config.ffprobe.enabled) {
                 await new Promise((resolve, reject) => {
@@ -118,7 +125,7 @@ async function scanCollection(collection_id, full_rescan = false) {
                     cp.exec(`${global.config.ffprobe.path} -v error -print_format json -show_format -show_streams -show_chapters "${file.replace('file://', '').replace(/\"/g, '\\"')}"`, async (err, stdout, stderr) => {
                         if (!err) {
                             const data = JSON.stringify(JSON.parse(stdout));
-                            await global.database.exec(`INSERT INTO media_probes VALUES (NULL, ?, ?, ?)`, [file, data, collection_id]);
+                            await global.database.exec(`INSERT INTO media_probes VALUES (NULL, ?, ?, ?);`, [file, data, collection_id]);
                         } else {
                             logger.error(`Error while probing "${file}": ${err.message}`);
                         }
@@ -141,22 +148,18 @@ async function scanCollection(collection_id, full_rescan = false) {
             }
         }
     }
-    for (const media of await global.database.fetch(`SELECT * FROM media WHERE collection_id = ${collection_id}`)) {
+    for (const media of await global.database.fetch(`SELECT * FROM media WHERE collection_id = ?;`, [collection_id])) {
         if (!await global.fileSystemBackends[protocol].exists(media.path)) {
-            await global.database.exec(`DELETE FROM media WHERE id = ${media.id}`);
+            await global.database.exec(`DELETE FROM media WHERE id = ?;`, [media.id]);
             logger.debug('Deleting', media.path, 'from database (not found on disk anymore)');
         }
     }
-    for (const media_probe of await global.database.fetch(`SELECT * FROM media_probes WHERE collection_id = ${collection_id}`)) {
+    for (const media_probe of await global.database.fetch(`SELECT * FROM media_probes WHERE collection_id = ?;`, [collection_id])) {
         if (!await global.fileSystemBackends[protocol].exists(media_probe.path)) {
-            await global.database.exec(`DELETE FROM media_probes WHERE id = ${media_probe.id}`);
+            await global.database.exec(`DELETE FROM media_probes WHERE id = ?;`, [media_probe.id]);
             logger.debug('Deleting', media_probe.path, 'from probe database (not found on disk anymore)');
         }
     }
     logger.debug('Finished scanning collection', collection_id);
 }
-global.database.exec(`DELETE FROM collection`).then(() => {
-    global.database.exec(`INSERT INTO collection VALUES (1, 'file://H:\\test-media', 'test', true, true, true)`).then(() => {
-        scanCollection(1, true);
-    });
-})
+module.exports = scanCollection;

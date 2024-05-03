@@ -1,5 +1,5 @@
 # Before initial release:
-- [ ] Video playback (kind of important)
+- [x] Video playback (kind of important) (raw playback can be achieved with /stream/[media_id])
 - [x] Video collections
 - [x] Organizing shows and movies and get metadata from imdb
 - [x] Modular back end for file system (to possibly enable remote playback)
@@ -7,6 +7,7 @@
 - [ ] UI
 
 # Sometime after initial release:
+- [ ] Search local database instead of making so many requests to imdb
 - [ ] Better UI
 - [ ] Recording watch time and played movies/shows
 - [ ] Watch list
