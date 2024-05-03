@@ -53,8 +53,8 @@ const server = http.createServer(async (req, res) => {
         GET[decodeURIComponent(param.split('=')[0])] = decodeURIComponent(param.split('=')[1]);
     });
     if (url == '/') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end('{}');
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(await fs.promises.readFile(__dirname + '/www/index.html', 'utf8'));
     } else if (url == '/api/all-collections-media') {
         const limit = Number(GET['limit'] || 0);
         const offset = Number(GET['offset'] || 0);
@@ -211,14 +211,14 @@ server.listen(config.http.port, config.http.host, () => {
 });
 async function tests() {
     // tests
-    await global.database.exec(`DELETE FROM collection;`);
-    await global.database.exec(`INSERT INTO collection VALUES (1, 'file://E:\\hdd3\\jellyfin\\movies', 'movies', true, true, false);`);
+    //await global.database.exec(`DELETE FROM collection;`);
+    //await global.database.exec(`INSERT INTO collection VALUES (1, 'file://E:\\hdd3\\jellyfin\\movies', 'movies', true, true, false);`);
     //scanCollection(1, false);
-    await global.database.exec(`INSERT INTO collection VALUES (2, 'file://E:\\hdd3\\jellyfin\\shows', 'shows', true, true, false);`);
+    //await global.database.exec(`INSERT INTO collection VALUES (2, 'file://E:\\hdd3\\jellyfin\\shows', 'shows', true, true, false);`);
     //scanCollection(2, false);
-    await global.database.exec(`INSERT INTO collection VALUES (3, 'file://H:\\test-media', 'mixed', true, true, true);`);
+    //await global.database.exec(`INSERT INTO collection VALUES (3, 'file://H:\\test-media', 'mixed', true, true, true);`);
     //scanCollection(3, false);
-    await global.database.exec(`INSERT INTO collection VALUES (4, 'discord:///', 'discord', true, true, true);`);
+    //await global.database.exec(`INSERT INTO collection VALUES (4, 'discord:///', 'discord', true, true, true);`);
     //scanCollection(4, true);
     // end tests
 }
