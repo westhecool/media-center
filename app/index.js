@@ -53,22 +53,19 @@ const server = http.createServer(async (req, res) => {
         GET[decodeURIComponent(param.split('=')[0])] = decodeURIComponent(param.split('=')[1]);
     });
     if (url == '/') {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(await fs.promises.readFile(__dirname + '/www/index.html', 'utf8'));
-    } else if (url == '/api/all-collections-media') {
-        const limit = Number(GET['limit'] || 0);
-        const offset = Number(GET['offset'] || 0);
-        var data = [];
-        for (const collection of (await global.database.fetch(`SELECT * FROM collection;`))) {
-            const args = limit ? [collection.id, limit, offset] : [collection.id];
-            data.push({
-                id: collection.id,
-                name: collection.name,
-                media: await database.fetch(`SELECT * FROM media WHERE collection_id = ? AND ((type = 'movie') OR (type = 'episode' AND episode = 1 AND season = 1)) ORDER BY added_on DESC ${limit ? `LIMIT ? OFFSET ?` : ''};`, args)
-            });
+        res.writeHead(302, { 'Location': '/web' });
+        res.end();
+    } else if (url.startsWith('/web')) {
+        if (fs.existsSync(__dirname + '/www' + url.replace('/web', '')) && fs.lstatSync(__dirname + '/www' + url.replace('/web', '')).isFile()) {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(await fs.promises.readFile(__dirname + '/www' + url.replace('/web', ''), 'utf8'));
+        } else if (fs.existsSync(__dirname + '/www' + url.replace('/web', '') + '/index.html') && fs.lstatSync(__dirname + '/www' + url.replace('/web', '') + '/index.html').isFile()) {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(await fs.promises.readFile(__dirname + '/www' + url.replace('/web', '') + '/index.html', 'utf8'));
+        } else {
+            res.writeHead(404);
+            res.end();
         }
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(data));
     } else if (url == '/api/collection-media') {
         const limit = Number(GET['limit'] || 0);
         const offset = Number(GET['offset'] || 0);
@@ -119,6 +116,21 @@ const server = http.createServer(async (req, res) => {
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(await global.database.fetch(`SELECT * FROM media WHERE imdb_id = ?;`, [id])));
+    } else if (url == '/api/imdb') {
+        const id = GET['id'];
+        if (!id) {
+            res.writeHead(400);
+            res.end();
+            return;
+        }
+        const imdb = (await global.database.fetch(`SELECT * FROM imdb WHERE imdb_id = ?;`, [id]))[0];
+        if (!imdb) {
+            res.writeHead(404);
+            res.end();
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(imdb));
     } else if (url.startsWith('/stream/')) {
         const id = decodeURI(url.split('/')[2].split('.')[0]);
         if (!id) {
@@ -211,14 +223,14 @@ server.listen(config.http.port, config.http.host, () => {
 });
 async function tests() {
     // tests
-    //await global.database.exec(`DELETE FROM collection;`);
-    //await global.database.exec(`INSERT INTO collection VALUES (1, 'file://E:\\hdd3\\jellyfin\\movies', 'movies', true, true, false);`);
-    //scanCollection(1, false);
-    //await global.database.exec(`INSERT INTO collection VALUES (2, 'file://E:\\hdd3\\jellyfin\\shows', 'shows', true, true, false);`);
-    //scanCollection(2, false);
-    //await global.database.exec(`INSERT INTO collection VALUES (3, 'file://H:\\test-media', 'mixed', true, true, true);`);
-    //scanCollection(3, false);
-    //await global.database.exec(`INSERT INTO collection VALUES (4, 'discord:///', 'discord', true, true, true);`);
-    //scanCollection(4, true);
+    await global.database.exec(`DELETE FROM collection;`);
+    await global.database.exec(`INSERT INTO collection VALUES (1, 'file://E:\\hdd3\\jellyfin\\movies', 'movies', true, true, false);`);
+    scanCollection(1, false);
+    await global.database.exec(`INSERT INTO collection VALUES (2, 'file://E:\\hdd3\\jellyfin\\shows', 'shows', true, true, false);`);
+    scanCollection(2, false);
+    await global.database.exec(`INSERT INTO collection VALUES (3, 'file://H:\\test-media', 'mixed', true, true, true);`);
+    scanCollection(3, false);
+    await global.database.exec(`INSERT INTO collection VALUES (4, 'discord:///', 'discord', true, true, true);`);
+    scanCollection(4, true);
     // end tests
 }

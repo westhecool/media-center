@@ -1,8 +1,73 @@
 <html>
-    <head>
-        <title>Media Center</title>
-    </head>
-    <body>
-        
-    </body>
+
+<head>
+    <title>Media Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+
+<body>
+    <h1 id="title">Media Center</h1>
+    <script>
+        function openMedaInfo(collection_id, imdb_id) {
+            console.log(collection_id, imdb_id);
+        }
+
+        var done = {};
+        var offsets = {};
+        async function fetchCollectionMedia(collection_id, limit = 0, offset = 0) {
+            const res = await fetch('/api/collection-media?limit=' + limit + '&offset=' + offset + '&collection=' + collection_id);
+            const data = await res.json();
+            if (data.media.length < limit) { // this is the last page
+                offsets[collection_id] = -1;
+            }
+            for (const media of data.media) {
+                if (!done[collection_id]) {
+                    done[collection_id] = {};
+                }
+                if (done[collection_id][media.imdb_id]) {
+                    continue;
+                }
+                const imdb = JSON.parse((await (await fetch('/api/imdb?id=' + media.imdb_id)).json()).json);
+                const a = document.createElement('a');
+                a.onclick = () => {
+                    openMedaInfo(collection_id, media.imdb_id);
+                }
+                const img = document.createElement('img');
+                img.src = imdb.meta.image ? imdb.meta.image.url : '';
+                a.appendChild(img);
+                document.getElementById(`collection-${collection_id}`).appendChild(a);
+                done[collection_id][media.imdb_id] = true;
+            }
+        }
+
+        (async () => {
+            const res = await fetch('/api/collections');
+            const data = await res.json();
+            for (const collection of data) {
+                const title = document.createElement('h3');
+                title.className = 'collection-title';
+                title.innerText = collection.name;
+                document.body.appendChild(title);
+                const div = document.createElement('div');
+                div.className = 'collection';
+                div.id = `collection-${collection.id}`;
+                offsets[collection.id] = 0;
+                var lastScroll = Date.now()
+                div.onscroll = () => {
+                    if (div.scrollWidth - div.clientWidth - div.scrollLeft < (div.clientWidth * 0.50)) {
+                        if (offsets[collection.id] != -1 && Date.now() - lastScroll > 250) { // 0.25s delay
+                            lastScroll = Date.now();
+                            offsets[collection.id] += 15;
+                            fetchCollectionMedia(collection.id, 15, offsets[collection.id]);
+                        }
+                    }
+                }
+                document.body.appendChild(div);
+                await fetchCollectionMedia(collection.id, 15, 0);
+            }
+        })();
+    </script>
+</body>
+
 </html>
