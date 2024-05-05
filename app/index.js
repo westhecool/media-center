@@ -87,7 +87,7 @@ const server = http.createServer(async (req, res) => {
         var data = {
             id: collection.id,
             name: collection.name,
-            media: await database.fetch(`SELECT * FROM media WHERE collection_id = ? AND ((type = 'movie') OR (type = 'episode' AND episode = 1 AND season = 1)) ORDER BY added_on DESC ${limit ? `LIMIT ? OFFSET ?` : ''};`, args)
+            media: await database.fetch(`SELECT * FROM media WHERE collection_id = ? AND (file_type = 'video' AND ((type = 'movie') OR (type = 'episode' AND episode = 1 AND season = 1))) ORDER BY added_on DESC ${limit ? `LIMIT ? OFFSET ?` : ''};`, args)
         };
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
