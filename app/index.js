@@ -27,24 +27,26 @@ logger.debug('Loading database...');
 global.database = require('./database.js');
 const scanCollection = require('./collection-scanner.js');
 const cp = require('child_process');
-if (config.ffmpeg.enabled) {
+if (global.config.ffmpeg.enabled) {
     try {
         cp.execSync(config.ffmpeg.path + ' -version');
     } catch (e) {
         logger.warn('ffmpeg not found. Disabling...');
-        config.ffmpeg.enabled = false;
+        global.config.ffmpeg.enabled = false;
     }
 }
-if (config.ffprobe.enabled) {
+if (global.config.ffprobe.enabled) {
     try {
         cp.execSync(config.ffprobe.path + ' -version');
     } catch (e) {
         logger.warn('ffprobe not found. Disabling...');
-        config.ffprobe.enabled = false;
+        global.config.ffprobe.enabled = false;
     }
 }
 const mime = require('mime-types');
 logger.debug('Starting server...');
+fs.copyFileSync(global.config.videojs.js_path, __dirname + '/www/video-js.js');
+fs.copyFileSync(global.config.videojs.css_path, __dirname + '/www/video-js.css');
 const server = http.createServer(async (req, res) => {
     logger.debug('Request', req.url);
     const url = req.url.split('?')[0];
@@ -52,10 +54,10 @@ const server = http.createServer(async (req, res) => {
     (req.url.split('?')[1] || '').split('&').forEach(param => {
         GET[decodeURIComponent(param.split('=')[0])] = decodeURIComponent(param.split('=')[1]);
     });
-    if (url == '/') {
-        res.writeHead(302, { 'Location': '/web' });
+    if (url == '/' || url == '/web') {
+        res.writeHead(302, { 'Location': '/web/' });
         res.end();
-    } else if (url.startsWith('/web')) {
+    } else if (url.startsWith('/web/')) {
         if (fs.existsSync(__dirname + '/www' + url.replace('/web', '')) && fs.lstatSync(__dirname + '/www' + url.replace('/web', '')).isFile()) {
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(await fs.promises.readFile(__dirname + '/www' + url.replace('/web', ''), 'utf8'));
