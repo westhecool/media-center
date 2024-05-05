@@ -4,4 +4,5 @@ test-media/
 data/
 config/config.jsonc
 app/file-system-backends/custom-*
-app/www/video-js*
+app/www/video-js.css
+app/www/video-js.js
