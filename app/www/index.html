@@ -16,6 +16,7 @@
 
         #title {
             margin: 5px;
+            margin-bottom: 25px;
         }
 
         ::-webkit-scrollbar {
@@ -37,14 +38,23 @@
             border-radius: 5px;
         }
 
-        .collection {
+        .collection-container {
+            background-color: #202020;
+            box-shadow: 0.5rem 1rem rgba(0, 0, 0, 0.1);
             border-radius: 5px;
             margin-right: 5px;
             margin-left: 5px;
+            margin-bottom: 25px;
+            border-color: #222222;
+            border-style: solid;
+            border-width: 1px;
+            padding: 5px;
+        }
+
+        .collection {
             display: flex;
             flex-direction: row;
             align-items: center;
-            margin-bottom: 25px;
             height: 275px;
             overflow-x: scroll;
             overflow-y: hidden;
@@ -63,7 +73,10 @@
         }
 
         .collection-title {
-            margin: 5px;
+            margin-top: 0;
+            margin-left: 0;
+            margin-right: 0;
+            margin-bottom: 5px;
             text-transform: capitalize;
         }
 
@@ -75,9 +88,12 @@
             transform: translateX(-50%);
             width: 85%;
             height: 85%;
-            background-color: #202020;
+            background-color: #222222;
             padding: 0px;
             margin: 0px;
+            border-color: #252525;
+            border-style: solid;
+            border-width: 1px;
         }
 
         #media-info-background {
@@ -194,10 +210,12 @@
             const res = await fetch('/api/collections');
             const data = await res.json();
             for (const collection of data) {
+                const container = document.createElement('div');
+                container.className = 'collection-container';
                 const title = document.createElement('h3');
                 title.className = 'collection-title';
                 title.innerText = collection.name;
-                document.body.appendChild(title);
+                container.appendChild(title);
                 const div = document.createElement('div');
                 div.className = 'collection';
                 div.id = `collection-${collection.id}`;
@@ -212,7 +230,8 @@
                         }
                     }
                 }
-                document.body.appendChild(div);
+                container.appendChild(div);
+                document.body.appendChild(container);
                 await fetchCollectionMedia(collection.id, 15, 0);
             }
         })();
