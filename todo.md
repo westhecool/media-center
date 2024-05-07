@@ -5,10 +5,12 @@
 - [x] Modular back end for file system (to possibly enable remote playback)
 - [ ] Multiple users
 - [ ] UI
+- [ ] Search
 
 # Sometime after initial release:
 - [ ] Search local database instead of making so many requests to imdb
 - [ ] Better UI
+- [ ] Better search
 - [ ] Recording watch time and played movies/shows
 - [ ] Watch list
 - [x] Record media stream information from files (with ffprobe)
