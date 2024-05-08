@@ -148,11 +148,17 @@ async function scanCollection(collection_id, full_rescan = false) {
             }
         }
     }
+    var titles = [];
     for (const media of await global.database.fetch(`SELECT * FROM media WHERE collection_id = ?;`, [collection_id])) {
+        if (!titles.includes(media.imdb_id)) titles.push(media.imdb_id);
         if (!await global.fileSystemBackends[protocol].exists(media.path)) {
             await global.database.exec(`DELETE FROM media WHERE id = ?;`, [media.id]);
             logger.debug('Deleting', media.path, 'from database (not found on disk anymore)');
         }
+    }
+    await global.database.exec(`DELETE FROM collection_titles WHERE collection_id = ?;`, [collection_id]);
+    for (const title of titles) {
+        await global.database.exec(`INSERT INTO collection_titles VALUES (NULL, ?, ?);`, [collection_id, title]);
     }
     for (const media_probe of await global.database.fetch(`SELECT * FROM media_probes WHERE collection_id = ?;`, [collection_id])) {
         if (!await global.fileSystemBackends[protocol].exists(media_probe.path)) {

@@ -30,6 +30,7 @@ database.exec('CREATE TABLE IF NOT EXISTS imdb (id INTEGER PRIMARY KEY AUTOINCRE
 database.exec('CREATE TABLE IF NOT EXISTS media (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT, imdb_id TEXT, stream_title TEXT, type TEXT, file_type TEXT, stream_language TEXT, stream_resolution TEXT, size INTEGER, mtime DATE, added_on DATE, collection_id INTEGER, episode INTEGER, season INTEGER);');
 database.exec('CREATE TABLE IF NOT EXISTS media_probes (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT, data TEXT, collection_id INTEGER);'); // TODO: add quality, codec, 10-bit color to search by
 database.exec('CREATE TABLE IF NOT EXISTS collection (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT, name TEXT, allow_transcoding BOOLEAN, allow_media_probe BOOLEAN, use_custom_naming_format BOOLEAN);');
+database.exec('CREATE TABLE IF NOT EXISTS collection_titles (id INTEGER PRIMARY KEY AUTOINCREMENT, collection_id INTEGER, name TEXT);');
 module.exports = {
     exec,
     fetch

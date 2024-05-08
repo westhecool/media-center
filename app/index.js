@@ -68,10 +68,8 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(404);
             res.end();
         }
-    } else if (url == '/api/collection-media') {
-        const limit = Number(GET['limit'] || 0);
-        const offset = Number(GET['offset'] || 0);
-        const collection_id = Number(GET['collection']);
+    } else if (url == '/api/all-collection-media') {
+        const collection_id = Number(GET['id']);
         if (!collection_id) {
             res.writeHead(400);
             res.end();
@@ -83,11 +81,10 @@ const server = http.createServer(async (req, res) => {
             res.end();
             return;
         }
-        const args = limit ? [collection_id, limit, offset] : [collection_id];
         var data = {
             id: collection.id,
             name: collection.name,
-            media: await database.fetch(`SELECT * FROM media WHERE collection_id = ? AND (file_type = 'video' AND ((type = 'movie') OR (type = 'episode' AND episode = 1 AND season = 1))) ORDER BY added_on DESC ${limit ? `LIMIT ? OFFSET ?` : ''};`, args)
+            media: await database.fetch(`SELECT * FROM media WHERE collection_id = ?;`,  [collection_id])
         };
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
@@ -118,6 +115,23 @@ const server = http.createServer(async (req, res) => {
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(await global.database.fetch(`SELECT * FROM media WHERE imdb_id = ?;`, [id])));
+    } else if (url == '/api/collection-titles') {
+        const limit = Number(GET['limit'] || 0);
+        const offset = Number(GET['offset'] || 0);
+        const id = Number(GET['id'] || 0);
+        if (!id) {
+            res.writeHead(400);
+            res.end();
+            return;
+        }
+        const media = (await global.database.fetch(`SELECT * FROM media WHERE id = ?;`, [id]))[0];
+        if (!media) {
+            res.writeHead(404);
+            res.end();
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(await global.database.fetch(`SELECT * FROM collection_titles WHERE collection_id = ? ${limit ? 'LIMIT ? OFFSET ?' : ''};`, limit ? [id, limit, offset] : [id])));
     } else if (url == '/api/imdb') {
         const id = GET['id'];
         if (!id) {
