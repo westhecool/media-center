@@ -13,6 +13,7 @@
 - [ ] Better search
 - [ ] Recording watch time and played movies/shows
 - [ ] Watch list
+- [ ] Cashing title posters
 - [x] Record media stream information from files (with ffprobe)
 - [ ] Support more file type formats
 - [x] Support more file naming formats (done - could work better)
