@@ -150,15 +150,15 @@
             margin-top: 15px;
         }
 
-        #media-info-rating {
+        #media-info-bar {
             margin: 0;
             margin-top: 5px;
             width: fit-content;
         }
 
-        #media-info-rating b {
+        #media-info-bar b {
             margin: 0;
-            margin-right: 160px;
+            margin-right: 120px;
         }
 
         #media-info-genres {
@@ -208,7 +208,7 @@
                 
                 <div>
                     <h1 id="media-info-title"></h1>
-                    <div id="media-info-rating"></div>
+                    <div id="media-info-bar"></div>
                     <b id="media-info-genres"></b>
                     <p id="media-info-plot"></p>
                 </div>
@@ -231,16 +231,16 @@
             const res = await fetch('/api/imdb?id=' + imdb_id);
             const data = JSON.parse((await res.json()).json);
             console.log(data);
-            document.getElementById('media-info-title').innerText = data.meta.title + ' (' + data.meta.releaseYear + ')';
+            document.getElementById('media-info-title').innerText = data.meta.title;
             document.getElementById('media-info-plot').innerText = data.meta.plot;
             document.getElementById('media-info-image').src = data.meta.image ? data.meta.image.url : '/web/no-poster.jpg';
-            document.getElementById('media-info-rating').innerHTML = `<b>${data.meta.certificateRating}</b><b>${data.meta.rating}/10</b><b>${data.meta.runtime / 60}m</b>`;
-            document.getElementById('media-info-genres').innerText = '';
+            document.getElementById('media-info-bar').innerHTML = `<b>${data.meta.releaseYear}</b><b>${data.meta.runtime / 60}m</b><b>${data.meta.certificateRating}</b><b>${data.meta.rating}/10</b>`;
+            /*document.getElementById('media-info-genres').innerText = '';
             for (const genre of data.meta.genres) {
                 document.getElementById('media-info-genres').innerText += `${genre}, `;
             }
             document.getElementById('media-info-genres').innerText = document.getElementById('media-info-genres').innerText.substring(0, document.getElementById('media-info-genres').innerText.length - 2);
-            document.getElementById('media-info').style.animation = 'media-info-open 0.5s forwards';
+            */document.getElementById('media-info').style.animation = 'media-info-open 0.5s forwards';
             document.getElementById('media-info-background').style.display = 'block';
         }
 
