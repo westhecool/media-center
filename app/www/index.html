@@ -49,6 +49,33 @@
             border-style: solid;
             border-width: 1px;
             padding: 5px;
+            position: relative;
+        }
+
+        .collection-left-button svg {
+            width: 25px;
+            height: 25px;
+        }
+
+        .collection-left-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: -4px;
+            cursor: pointer;
+        }
+
+        .collection-right-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: -4px;
+            cursor: pointer;
+        }
+
+        .collection-right-button svg {
+            width: 25px;
+            height: 25px;
         }
 
         .collection {
@@ -58,6 +85,8 @@
             height: 275px;
             overflow-x: scroll;
             overflow-y: hidden;
+            margin-left: 12px;
+            margin-right: 12px;
         }
 
         .collection img {
@@ -118,18 +147,25 @@
         #media-info-close {
             position: absolute;
             top: 0;
-            right: 8px;
-            font-size: x-large;
+            right: 0;
+            /*font-size: x-large;*/
             cursor: pointer;
-            font-weight: 500;
+            /*font-weight: 500;*/
             margin: 0;
             padding: 0;
+        }
+
+        #media-info-close svg {
+            margin: 0;
+            padding: 0;
+            width: 32px;
+            height: 32px;
         }
 
         #media-info-main {
             display: flex;
             flex-direction: row;
-            
+
         }
 
         #media-info-image {
@@ -201,10 +237,15 @@
     <div id="media-info-background" style="display: none;"></div>
     <div id="media-info" style="animation: media-info-close 0s forwards;">
         <div id="media-info-inner">
-            <a id="media-info-close">X</a>
+            <a id="media-info-close"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-x" viewBox="0 0 16 16">
+                    <path
+                        d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+                </svg>
+            </a>
             <div id="media-info-main">
                 <img id="media-info-image">
-                
+
                 <div>
                     <h1 id="media-info-title"></h1>
                     <div id="media-info-bar"></div>
@@ -285,8 +326,28 @@
                 const div = document.createElement('div');
                 div.className = 'collection';
                 div.id = `collection-${collection.id}`;
+                const left = document.createElement('div');
+                left.className = 'collection-left-button';
+                left.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16"><path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/></svg>`;
+                left.onclick = async () => { // TODO: add non linear scrolling
+                    for (let i = 0; i < div.offsetWidth; i += 25) {
+                        div.scrollLeft -= 25;
+                        await new Promise(r => setTimeout(r, 1));
+                    }
+                }
+                container.appendChild(left);
+                const right = document.createElement('div');
+                right.className = 'collection-right-button';
+                right.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-right" viewBox="0 0 16 16"><path d="M6 12.796V3.204L11.481 8zm.659.753 5.48-4.796a1 1 0 0 0 0-1.506L6.66 2.451C6.011 1.885 5 2.345 5 3.204v9.592a1 1 0 0 0 1.659.753"/></svg>`;
+                right.onclick = async () => { // TODO: add non linear scrolling
+                    for (let i = 0; i < div.offsetWidth; i += 25) {
+                        div.scrollLeft += 25;
+                        await new Promise(r => setTimeout(r, 1));
+                    }
+                }
+                container.appendChild(right);
                 offsets[collection.id] = 0;
-                var lastScroll = Date.now()
+                var lastScroll = Date.now();
                 div.onscroll = () => {
                     if (div.scrollWidth - div.clientWidth - div.scrollLeft < (div.clientWidth * 0.25)) {
                         if (offsets[collection.id] != -1 && Date.now() - lastScroll > 250) { // 0.25s delay
