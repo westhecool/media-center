@@ -21,6 +21,7 @@
 - [ ] IPTV
 - [ ] M3u(8) playback
 - [ ] Transcoding
+- [ ] Automatic subtitle conversion
 
 # Possible features
 - [ ] Other media databases (tmdb, myanimelist, etc.)
