@@ -77,7 +77,6 @@
             margin-left: 0;
             margin-right: 0;
             margin-bottom: 5px;
-            text-transform: capitalize;
         }
 
         #media-info {
@@ -85,15 +84,16 @@
             position: fixed;
             top: 15px;
             left: 50%;
-            transform: translateX(-50%);
-            width: 85%;
-            height: 85%;
+            width: fit-content;
+            height: fit-content;
+            min-width: 50rem;
             background-color: #222222;
-            padding: 0px;
-            margin: 0px;
+            padding: 0;
+            margin: 0;
             border-color: #252525;
             border-style: solid;
             border-width: 1px;
+            transform: translateX(-50%);
         }
 
         #media-info-background {
@@ -108,7 +108,10 @@
         }
 
         #media-info-inner {
-            padding: 10px;
+            padding-right: 25px;
+            padding-left: 15px;
+            padding-top: 15px;
+            padding-bottom: 15px;
             position: relative;
         }
 
@@ -121,6 +124,47 @@
             font-weight: 500;
             margin: 0;
             padding: 0;
+        }
+
+        #media-info-main {
+            display: flex;
+            flex-direction: row;
+            
+        }
+
+        #media-info-image {
+            max-width: 350px;
+            max-height: 350px;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        #media-info-title {
+            white-space: nowrap;
+            margin: 0;
+        }
+
+        #media-info-plot {
+            max-width: 500px;
+            margin: 0;
+            margin-top: 15px;
+        }
+
+        #media-info-rating {
+            margin: 0;
+            margin-top: 5px;
+            width: fit-content;
+        }
+
+        #media-info-rating b {
+            margin: 0;
+            margin-right: 160px;
+        }
+
+        #media-info-genres {
+            margin: 0;
+            margin-top: 12px;
+            max-width: 500px;
         }
 
         @keyframes media-info-open {
@@ -159,7 +203,18 @@
     <div id="media-info" style="animation: media-info-close 0s forwards;">
         <div id="media-info-inner">
             <a id="media-info-close">X</a>
+            <div id="media-info-main">
+                <img id="media-info-image">
+                
+                <div>
+                    <h1 id="media-info-title"></h1>
+                    <div id="media-info-rating"></div>
+                    <b id="media-info-genres"></b>
+                    <p id="media-info-plot"></p>
+                </div>
+            </div>
         </div>
+        <br><br><br>
     </div>
     <script>
         document.getElementById('media-info-close').onclick = () => {
@@ -171,10 +226,22 @@
             document.getElementById('media-info-background').style.display = 'none';
         };
 
-        function openMedaInfo(collection_id, imdb_id) {
+        async function openMedaInfo(collection_id, imdb_id) {
+            console.log(collection_id, imdb_id);
+            const res = await fetch('/api/imdb?id=' + imdb_id);
+            const data = JSON.parse((await res.json()).json);
+            console.log(data);
+            document.getElementById('media-info-title').innerText = data.meta.title + ' (' + data.meta.releaseYear + ')';
+            document.getElementById('media-info-plot').innerText = data.meta.plot;
+            document.getElementById('media-info-image').src = data.meta.image ? data.meta.image.url : '/web/no-poster.jpg';
+            document.getElementById('media-info-rating').innerHTML = `<b>${data.meta.certificateRating}</b><b>${data.meta.rating}/10</b><b>${data.meta.runtime / 60}m</b>`;
+            document.getElementById('media-info-genres').innerText = '';
+            for (const genre of data.meta.genres) {
+                document.getElementById('media-info-genres').innerText += `${genre}, `;
+            }
+            document.getElementById('media-info-genres').innerText = document.getElementById('media-info-genres').innerText.substring(0, document.getElementById('media-info-genres').innerText.length - 2);
             document.getElementById('media-info').style.animation = 'media-info-open 0.5s forwards';
             document.getElementById('media-info-background').style.display = 'block';
-            console.log(collection_id, imdb_id);
         }
 
         var done = {};
