@@ -14,6 +14,7 @@
 - [ ] Recording watch time and played movies/shows
 - [ ] Watch list
 - [ ] Cashing title posters
+- [ ] Add the ability to have unidentified media / a manual user interface to identify files
 - [x] Record media stream information from files (with ffprobe)
 - [ ] Support more file type formats
 - [x] Support more file naming formats (done - could work better)

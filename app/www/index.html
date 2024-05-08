@@ -109,9 +109,9 @@
 
         #media-info-inner {
             padding-right: 25px;
-            padding-left: 15px;
-            padding-top: 15px;
-            padding-bottom: 15px;
+            padding-left: 10px;
+            padding-top: 10px;
+            padding-bottom: 10px;
             position: relative;
         }
 
@@ -158,7 +158,6 @@
 
         #media-info-bar b {
             margin: 0;
-            margin-right: 120px;
         }
 
         #media-info-genres {
@@ -234,7 +233,7 @@
             document.getElementById('media-info-title').innerText = data.meta.title;
             document.getElementById('media-info-plot').innerText = data.meta.plot;
             document.getElementById('media-info-image').src = data.meta.image ? data.meta.image.url : '/web/no-poster.jpg';
-            document.getElementById('media-info-bar').innerHTML = `<b>${data.meta.releaseYear}</b><b>${data.meta.runtime / 60}m</b><b>${data.meta.certificateRating}</b><b>${data.meta.rating}/10</b>`;
+            document.getElementById('media-info-bar').innerHTML = `<b>${data.meta.releaseYear}</b> | <b>${data.meta.runtime / 60}m</b> | <b>${data.meta.certificateRating}</b> | <b>${data.meta.rating}/10</b>`;
             /*document.getElementById('media-info-genres').innerText = '';
             for (const genre of data.meta.genres) {
                 document.getElementById('media-info-genres').innerText += `${genre}, `;
