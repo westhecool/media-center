@@ -9,7 +9,7 @@
 
 # Sometime after initial release:
 - [ ] Search local database instead of making so many requests to imdb
-- [ ] Better UI
+- [ ] Better UI - "rn, it's not giving" - @faisalnjs
 - [ ] Better search
 - [ ] Recording watch time and played movies/shows
 - [ ] Watch list
