@@ -127,9 +127,11 @@
             border-style: solid;
             border-width: 1px;
             transform: translateX(-50%);
+            animation: media-info-close 0s forwards;
         }
 
         #media-info-background {
+            display: none;
             z-index: 1;
             position: fixed;
             top: 0;
@@ -142,7 +144,7 @@
         }
 
         #media-info-inner {
-            padding-right: 25px;
+            padding-right: 35px;
             padding-left: 10px;
             padding-top: 10px;
             padding-bottom: 10px;
@@ -151,8 +153,8 @@
 
         #media-info-close {
             position: absolute;
-            top: 0;
-            right: 0;
+            top: 5px;
+            right: 5px;
             /*font-size: x-large;*/
             cursor: pointer;
             /*font-weight: 500;*/
@@ -163,8 +165,8 @@
         #media-info-close svg {
             margin: 0;
             padding: 0;
-            width: 32px;
-            height: 32px;
+            width: 35px;
+            height: 35px;
         }
 
         #media-info-main {
@@ -177,7 +179,7 @@
             max-width: 350px;
             max-height: 350px;
             border-radius: 5px;
-            margin-right: 10px;
+            margin-right: 15px;
         }
 
         #media-info-title {
@@ -205,6 +207,57 @@
             margin: 0;
             margin-top: 12px;
             max-width: 500px;
+        }
+
+        #media-info-right {
+            margin-top: 85px;
+            margin-left: 10px;
+        }
+
+        .media-info-right-text {
+            width: 250px;
+        }
+
+        #media-info-watchlist {
+            margin: 0;
+            margin-right: 10px;
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            vertical-align: middle;
+            font-weight: bold;
+        }
+
+        #media-info-watchlist svg {
+            width: 32px;
+            height: 32px;
+            margin-right: 5px;
+        }
+
+        #media-info-play {
+            text-align: center;
+            margin: 0;
+            cursor: pointer;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            vertical-align: middle;
+            font-weight: bold;
+        }
+
+        #media-info-play svg {
+            width: 32px;
+            height: 32px;
+            margin-right: 5px;
+        }
+
+        #media-info-icons {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            vertical-align: middle;
         }
 
         @keyframes media-info-open {
@@ -239,8 +292,8 @@
 
 <body>
     <h1 id="title">Media Center</h1>
-    <div id="media-info-background" style="display: none;"></div>
-    <div id="media-info" style="animation: media-info-close 0s forwards;">
+    <div id="media-info-background"></div>
+    <div id="media-info">
         <div id="media-info-inner">
             <a id="media-info-close"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                     class="bi bi-x" viewBox="0 0 16 16">
@@ -250,12 +303,35 @@
             </a>
             <div id="media-info-main">
                 <img id="media-info-image">
-
-                <div>
+                <div id="media-info-left">
                     <h1 id="media-info-title"></h1>
                     <div id="media-info-bar"></div>
-                    <b id="media-info-genres"></b>
                     <p id="media-info-plot"></p>
+                </div>
+                <div id="media-info-right">
+                    <div id="media-info-icons">
+                        <a nclick="addToWatchlist()" id="media-info-watchlist" >
+                        <svg oxmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-plus-circle" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                            <path
+                                d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+                        </svg> Add to Watchlist
+                    </a>
+                        <a id="media-info-play" onclick="play()">
+                        <svg  xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-play-circle" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                            <path
+                                d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445" />
+                        </svg> Play
+                    </a>
+                    </div>
+                    <p class="media-info-right-text"><a style="color: gray;">Genres:</a> <b id="media-info-genres"></b>
+                    </p>
+                    <p class="media-info-right-text"><a style="color: gray;">Keywords:</a> <b
+                            id="media-info-keywords"></b></p>
+                    <!--<p class="media-info-right-text"><a style="color: gray;">Cast:</a> <b id="media-info-cast"></b></p>-->
                 </div>
             </div>
         </div>
@@ -271,22 +347,45 @@
             document.getElementById('media-info-background').style.display = 'none';
         };
 
+        var url = '';
+        function play() {
+            window.open(url, '_blank');
+        }        
+
         async function openMedaInfo(collection_id, imdb_id) {
-            console.log(collection_id, imdb_id);
+            //console.log(collection_id, imdb_id);
             const res = await fetch('/api/imdb?id=' + imdb_id);
             const data = JSON.parse((await res.json()).json);
-            console.log(data);
+            //console.log(data);
             document.getElementById('media-info-title').innerText = data.meta.title;
             document.getElementById('media-info-plot').innerText = data.meta.plot;
             document.getElementById('media-info-image').src = data.meta.image ? data.meta.image.url : '/web/no-poster.jpg';
             document.getElementById('media-info-bar').innerHTML = `<b>${data.meta.releaseYear}</b> | <b>${data.meta.runtime / 60}m</b> | <b>${data.meta.certificateRating}</b> | <b>${data.meta.rating}/10</b>`;
-            /*document.getElementById('media-info-genres').innerText = '';
+            document.getElementById('media-info-genres').innerText = '';
             for (const genre of data.meta.genres) {
                 document.getElementById('media-info-genres').innerText += `${genre}, `;
             }
-            document.getElementById('media-info-genres').innerText = document.getElementById('media-info-genres').innerText.substring(0, document.getElementById('media-info-genres').innerText.length - 2);
-            */document.getElementById('media-info').style.animation = 'media-info-open 0.5s forwards';
+            document.getElementById('media-info-genres').innerText = document.getElementById('media-info-genres').innerText.slice(0, -2);
+            document.getElementById('media-info-keywords').innerText = '';
+            for (const keyword of data.meta.keywords) {
+                document.getElementById('media-info-keywords').innerText += `${keyword}, `;
+            }
+            document.getElementById('media-info-keywords').innerText = document.getElementById('media-info-keywords').innerText.slice(0, -2);
+            /*document.getElementById('media-info-cast').innerText = '';
+            for (const cast_member of data.meta.cast) {
+                document.getElementById('media-info-cast').innerText += `${cast_member.name}, `;
+            }
+            document.getElementById('media-info-cast').innerText = document.getElementById('media-info-cast').innerText.slice(0, -2);*/
+            document.getElementById('media-info').style.animation = 'media-info-open 0.5s forwards';
             document.getElementById('media-info-background').style.display = 'block';
+            const res2 = await fetch('/api/medias-by-imdb-id?id=' + imdb_id);
+            const medias = await res2.json();
+            for (const media of medias) {
+                if (media.file_type == 'video') {
+                    url = '/stream/' + media.id;
+                    break;
+                }
+            }
         }
 
         //var done = {};
