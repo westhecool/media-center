@@ -81,13 +81,8 @@ const server = http.createServer(async (req, res) => {
             res.end();
             return;
         }
-        var data = {
-            id: collection.id,
-            name: collection.name,
-            media: await database.fetch(`SELECT * FROM media WHERE collection_id = ?;`,  [collection_id])
-        };
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(data));
+        res.end(JSON.stringify(await database.fetch(`SELECT * FROM media WHERE collection_id = ?;`,  [collection_id])));
     } else if (url == '/api/collections') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(await global.database.fetch(`SELECT * FROM collection;`)));
@@ -131,7 +126,11 @@ const server = http.createServer(async (req, res) => {
             return;
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(await global.database.fetch(`SELECT * FROM collection_titles WHERE collection_id = ? ${limit ? 'LIMIT ? OFFSET ?' : ''};`, limit ? [id, limit, offset] : [id])));
+        var data = [];
+        for (const title of await global.database.fetch(`SELECT * FROM collection_titles WHERE collection_id = ? ${limit ? 'LIMIT ? OFFSET ?' : ''};`, limit ? [id, limit, offset] : [id])) {
+            data.push(title.name);
+        }
+        res.end(JSON.stringify(data));
     } else if (url == '/api/imdb') {
         const id = GET['id'];
         if (!id) {
