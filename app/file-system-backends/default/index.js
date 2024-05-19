@@ -14,5 +14,6 @@ module.exports = {
     readDir: async (path) => { return await fs.promises.readdir(path.replace('file://', '')) },
     exists: (path) => new Promise((resolve, reject) => {
         fs.promises.stat(path.replace('file://', '')).then(() => resolve(true)).catch(() => resolve(false));
-    })
+    }),
+    init: async () => {},
 }

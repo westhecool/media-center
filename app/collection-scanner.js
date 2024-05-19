@@ -50,15 +50,22 @@ async function scanCollection(collection_id, full_rescan = false) {
                     logger.warn(`Error while scanning collection ${collection_id}: Unsupported file extension '${ext}' for file '${file}'.`);
                     return;
                 }
-                if (s.length == 3) { // file name (year).(language).(ext)
+                if (s.length == 3) { // file name (year).(stream title).(ext)
                     name = s[0];
-                    language = utils.convertToTwoLetterCode(s[1]);
+                    stream_title = s[1];
                 } else if (s.length == 4) { // file name (year).(stream title).(language).(ext)
                     name = s[0];
                     stream_title = s[1];
                     language = utils.convertToTwoLetterCode(s[2]);
                 } else { // file name (year).(ext)
                     name = s[0];
+                }
+                if (stream_title) {
+                    const match = stream_title.match(/\d{3,4}p/i); // match resolution
+                    if (match) {
+                        stream_title = stream_title.replace(match[0], '').trim();
+                        resolution = match[0];
+                    }
                 }
             } else {
                 const ext = path.extname(file).toLowerCase();
@@ -85,7 +92,7 @@ async function scanCollection(collection_id, full_rescan = false) {
             }
             const match = name.match(/\d{3,4}p/i); // match resolution
             if (match) {
-                name = name.replace(match[0], '');
+                name = name.replace(match[0], '').trim();
                 resolution = match[0];
             }
             if (is_show) {
