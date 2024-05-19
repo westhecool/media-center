@@ -117,8 +117,8 @@ async function main() {
                 res.end();
                 return;
             }
-            const media = (await global.database.fetch(`SELECT * FROM media WHERE id = ?;`, [id]))[0];
-            if (!media) {
+            const collection = (await global.database.fetch(`SELECT * FROM collection WHERE id = ?;`, [id]))[0];
+            if (!collection) {
                 res.writeHead(404);
                 res.end();
                 return;
@@ -244,7 +244,7 @@ async function main() {
         await global.database.exec(`INSERT INTO collection VALUES (3, 'file://H:\\test-media', 'mixed', true, true, true);`);
         scanCollection(3, false);
         await global.database.exec(`INSERT INTO collection VALUES (4, 'discord:///movies', 'discord', false, false, true);`);
-        scanCollection(4, true);
+        scanCollection(4, false);
         // end tests
     }
 }
