@@ -113,12 +113,20 @@ async function scanCollection(collection_id, full_rescan = false) {
             if (language) language = language.toLowerCase();
             name = name.trim();
             const q = await imdb.search(name);
-            if (q.length == 0 || !q[0].id.startsWith('tt')) {
+            var r = null;
+            for (const result of q) {
+                if (result.id.startsWith('tt')) {
+                    r = result;
+                    break;
+                }
+            }
+            if (!r) {
+                console.log(file, q, name)
                 logger.warn(`Error while scanning collection ${collection_id}: No results found for file '${file}'!`);
                 return;
             }
-            const imdb_id = q[0].id;
-            logger.debug('Identified', file, 'as', q[0].id, q[0].title, `(${q[0].year})`);
+            const imdb_id = r.id;
+            logger.debug('Identified', file, 'as', r.id, r.title, `(${r.year})`);
             await imdb.get(imdb_id); // add imdb info to the database for good measure
             const d = [file, imdb_id, stream_title, type, file_type, language, resolution, stats.size, stats.mtime, parseInt(media_info ? media_info.added_on : (Date.now() / 1000)), collection_id, episode, season];
             if (!media_info) await global.database.exec(`INSERT INTO media VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`, d);
