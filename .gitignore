@@ -5,3 +5,4 @@ data/
 config/config.jsonc
 app/file-system-backends/custom-*
 app/www/video-js.*
+experiments/
