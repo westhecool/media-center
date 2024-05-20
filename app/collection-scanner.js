@@ -121,7 +121,6 @@ async function scanCollection(collection_id, full_rescan = false) {
                 }
             }
             if (!r) {
-                console.log(file, q, name)
                 logger.warn(`Error while scanning collection ${collection_id}: No results found for file '${file}'!`);
                 return;
             }
