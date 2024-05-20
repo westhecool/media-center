@@ -171,6 +171,11 @@ async function main() {
                 res.end();
                 return;
             }
+            if (!await global.fileSystemBackends[media.path.split('://')[0]].exists(media.path)) {
+                res.writeHead(500);
+                res.end();
+                return;
+            }
             if (req.headers.range) {
                 const parts = req.headers.range.replace(/bytes=/, '').split('-');
                 const start = parseInt(parts[0], 10);
